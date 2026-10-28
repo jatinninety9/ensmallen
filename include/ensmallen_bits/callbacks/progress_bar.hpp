@@ -32,7 +32,7 @@ class ProgressBar
    */
   ProgressBar(const size_t widthIn = 70,
               std::ostream& output = arma::get_cout_stream()) :
-      width(100.0 / widthIn),
+      width(widthIn),
       output(output),
       objective(0),
       epochs(0),
@@ -146,14 +146,15 @@ class ProgressBar
     }
 
     const size_t progress = ((double) step / epochSize) * 100;
+    const size_t progressWidth = progress * width / 100;
     output << step++ << "/" << epochSize << " [";
-    for (size_t i = 0; i < 100; i += width)
+    for (size_t i = 0; i < width; ++i)
     {
-      if (i < progress)
+      if (i < progressWidth)
       {
         output << "=";
       }
-      else if (i == progress)
+      else if (i == progressWidth)
       {
         output << ">";
       }
@@ -211,14 +212,15 @@ class ProgressBar
     epochCompleted = true;
 
     const size_t progress = ((double) (step - 1) / epochSize) * 100;
+    const size_t progressWidth = progress * width / 100;
     output << step - 1 << "/" << epochSize << " [";
-    for (size_t i = 0; i < 100; i += width)
+    for (size_t i = 0; i < width; ++i)
     {
-      if (i < progress)
+      if (i < progressWidth)
       {
         output << "=";
       }
-      else if (i == progress)
+      else if (i == progressWidth)
       {
         output << ">";
       }
@@ -255,8 +257,8 @@ class ProgressBar
   }
 
  private:
-  //! Length of a single step (1%).
-  double width;
+  //! Width of the bar in characters.
+  size_t width;
 
   //! The output stream that all data is to be sent to; example: std::cout.
   std::ostream& output;
