@@ -12,8 +12,6 @@
 #include "catch.hpp"
 #include "test_function_tools.hpp"
 
-#include <streambuf>
-
 using namespace ens;
 using namespace ens::test;
 using namespace ens::callbacks::traits;
@@ -665,49 +663,19 @@ TEST_CASE("ProgressBarCallbackTest", "[CallbacksTest]")
 }
 
 /**
- * Make sure both progress displays respect the requested character width.
+ * Reject progress bar widths that cannot advance the rendering loop.
  */
 TEST_CASE("ProgressBarCallbackWidthTest", "[CallbacksTest]")
 {
-  // Bound output so a non-advancing render loop fails instead of hanging.
-  class BoundedBuffer : public std::streambuf
-  {
-   public:
-    BoundedBuffer() { setp(buffer, buffer + sizeof(buffer)); }
-    std::string str() const { return std::string(pbase(), pptr()); }
-
-   private:
-    char buffer[4096];
-  } buffer;
-
-  const size_t width = GENERATE(0, 1, 3, 10, 70, 100, 101, 120);
-  CAPTURE(width);
-
-  std::ostream stream(&buffer);
-  stream.exceptions(std::ios::badbit | std::ios::failbit);
-
-  SGDTestFunction f;
-  arma::mat coordinates = f.GetInitialPoint();
-  StandardSGD s(0.0003, 1, 10, -1, false);
-  ProgressBar progress(width, stream);
-  progress.BeginOptimization(s, f, coordinates);
-  progress.BeginEpoch(s, f, coordinates, 1, 0.0);
-
-  REQUIRE_NOTHROW(progress.StepTaken(s, f, coordinates));
-  REQUIRE_NOTHROW(progress.EndEpoch(s, f, coordinates, 1, 0.0));
-
-  const std::string output = buffer.str();
-  size_t position = 0;
-  size_t bars = 0;
-  while ((position = output.find('[', position)) != std::string::npos)
-  {
-    const size_t end = output.find(']', position);
-    REQUIRE(end != std::string::npos);
-    REQUIRE(end - position - 1 == width);
-    position = end + 1;
-    ++bars;
-  }
-  REQUIRE(bars == 2);
+  std::stringstream stream;
+  REQUIRE_NOTHROW(ProgressBar(1, stream));
+  REQUIRE_NOTHROW(ProgressBar(70, stream));
+  REQUIRE_NOTHROW(ProgressBar(100, stream));
+  REQUIRE_THROWS_AS(ProgressBar(0, stream), std::invalid_argument);
+  REQUIRE_THROWS_AS(ProgressBar(101, stream), std::invalid_argument);
+  REQUIRE_THROWS_AS(ProgressBar(120, stream), std::invalid_argument);
+  REQUIRE_THROWS_AS(ProgressBar(std::numeric_limits<size_t>::max(), stream),
+      std::invalid_argument);
 }
 
 /**

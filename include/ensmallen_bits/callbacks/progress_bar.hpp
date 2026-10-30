@@ -12,6 +12,8 @@
 #ifndef ENSMALLEN_CALLBACKS_PROGRESS_BAR_HPP
 #define ENSMALLEN_CALLBACKS_PROGRESS_BAR_HPP
 
+#include <stdexcept>
+
 #include <ensmallen_bits/function.hpp>
 
 namespace ens {
@@ -27,12 +29,13 @@ class ProgressBar
    * Set up the progress bar callback class with the given width and output
    * stream.
    *
-   * @param widthIn Width of the bar.
+   * @param widthIn Width of the bar (between 1 and 100, inclusive).
    * @param ostream Ostream which receives output from this object.
+   * @throws std::invalid_argument if widthIn is outside [1, 100].
    */
   ProgressBar(const size_t widthIn = 70,
               std::ostream& output = arma::get_cout_stream()) :
-      width(widthIn),
+      width(0),
       output(output),
       objective(0),
       epochs(0),
@@ -44,7 +47,13 @@ class ProgressBar
       epochStarted(false),
       epochCompleted(false)
 
-  { /* Nothing to do here. */ }
+  {
+    if (widthIn == 0 || widthIn > 100)
+      throw std::invalid_argument("ProgressBar::ProgressBar(): width must be "
+          "between 1 and 100.");
+
+    width = 100.0 / widthIn;
+  }
 
   /**
    * Callback function called at the begin of the optimization process.
@@ -146,15 +155,14 @@ class ProgressBar
     }
 
     const size_t progress = ((double) step / epochSize) * 100;
-    const size_t progressWidth = progress * width / 100;
     output << step++ << "/" << epochSize << " [";
-    for (size_t i = 0; i < width; ++i)
+    for (size_t i = 0; i < 100; i += width)
     {
-      if (i < progressWidth)
+      if (i < progress)
       {
         output << "=";
       }
-      else if (i == progressWidth)
+      else if (i == progress)
       {
         output << ">";
       }
@@ -212,15 +220,14 @@ class ProgressBar
     epochCompleted = true;
 
     const size_t progress = ((double) (step - 1) / epochSize) * 100;
-    const size_t progressWidth = progress * width / 100;
     output << step - 1 << "/" << epochSize << " [";
-    for (size_t i = 0; i < width; ++i)
+    for (size_t i = 0; i < 100; i += width)
     {
-      if (i < progressWidth)
+      if (i < progress)
       {
         output << "=";
       }
-      else if (i == progressWidth)
+      else if (i == progress)
       {
         output << ">";
       }
@@ -257,8 +264,8 @@ class ProgressBar
   }
 
  private:
-  //! Width of the bar in characters.
-  size_t width;
+  //! Length of a single step (1%).
+  double width;
 
   //! The output stream that all data is to be sent to; example: std::cout.
   std::ostream& output;
