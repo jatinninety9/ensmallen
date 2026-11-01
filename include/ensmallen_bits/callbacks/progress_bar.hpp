@@ -12,7 +12,7 @@
 #ifndef ENSMALLEN_CALLBACKS_PROGRESS_BAR_HPP
 #define ENSMALLEN_CALLBACKS_PROGRESS_BAR_HPP
 
-#include <stdexcept>
+
 
 #include <ensmallen_bits/function.hpp>
 
