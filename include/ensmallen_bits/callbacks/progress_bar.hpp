@@ -12,8 +12,6 @@
 #ifndef ENSMALLEN_CALLBACKS_PROGRESS_BAR_HPP
 #define ENSMALLEN_CALLBACKS_PROGRESS_BAR_HPP
 
-
-
 #include <ensmallen_bits/function.hpp>
 
 namespace ens {
